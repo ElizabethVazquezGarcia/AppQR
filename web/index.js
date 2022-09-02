@@ -3,14 +3,15 @@ import { join } from "path";
 import fs from "fs";
 import express from "express";
 import cookieParser from "cookie-parser";
-import { Shopify, ApiVersion } from "@shopify/shopify-api";
+import { Shopify, ApiVersion, LATEST_API_VERSION } from "@shopify/shopify-api";
+import applyQrCodePublicEndpoints from "./middleware/qr-code-public.js";
+
 import applyAuthMiddleware from "./middleware/auth.js";
 import verifyRequest from "./middleware/verify-request.js";
 import { setupGDPRWebHooks } from "./gdpr.js";
 import { BillingInterval } from "./helpers/ensure-billing.js";
 import { QRCodesDB } from "./qr-codes-db.js";
 import applyQrCodeApiEndpoints from "./middleware/qr-code-api.js";
-
 
 const USE_ONLINE_TOKENS = false;
 const TOP_LEVEL_OAUTH_COOKIE = "shopify_top_level_oauth";
@@ -30,7 +31,6 @@ const PROD_INDEX_PATH = `${process.cwd()}/frontend/dist/`;
 
 const dbFile = join(process.cwd(), "database.sqlite");
 const sessionDb = new Shopify.Session.SQLiteSessionStorage(dbFile);
-
 // Initialize SQLite DB
 QRCodesDB.db = sessionDb.db;
 QRCodesDB.init();
@@ -40,7 +40,7 @@ Shopify.Context.initialize({
   SCOPES: process.env.SCOPES.split(","),
   HOST_NAME: process.env.HOST.replace(/https?:\/\//, ""),
   HOST_SCHEME: process.env.HOST.split("://")[0],
-  API_VERSION: process.env.LATEST_API_VERSION,
+  API_VERSION: LATEST_API_VERSION,
   IS_EMBEDDED_APP: true,
   SESSION_STORAGE: sessionDb,
 });
@@ -88,11 +88,8 @@ export async function createServer(
 
   applyAuthMiddleware(app, {
     billing: billingSettings,
-    
   });
-  
-  
-
+  applyQrCodePublicEndpoints(app);
   app.post("/api/webhooks", async (req, res) => {
     try {
       await Shopify.Webhooks.Registry.process(req, res);

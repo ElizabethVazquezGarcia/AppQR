@@ -1,8 +1,7 @@
 import { defineConfig } from "vite";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
 import https from "https";
 import react from "@vitejs/plugin-react";
+
 if (
   process.env.npm_lifecycle_event === "build" &&
   !process.env.CI &&
@@ -13,6 +12,7 @@ if (
   );
 }
 
+const root = new URL(".", import.meta.url).pathname;
 const proxyOptions = {
   target: `http://127.0.0.1:${process.env.BACKEND_PORT}`,
   changeOrigin: false,
@@ -21,7 +21,7 @@ const proxyOptions = {
 };
 
 const host = process.env.HOST
-  ? process.env.HOST.replace(/https?:\/\//, "")
+  ? process.env.HOST.replace(/https:\/\//, "")
   : "localhost";
 
 let hmrConfig;
@@ -29,8 +29,8 @@ if (host === "localhost") {
   hmrConfig = {
     protocol: "ws",
     host: "localhost",
-    port: 64999,
-    clientPort: 64999,
+    port: 1313,
+    clientPort: 1313,
   };
 } else {
   hmrConfig = {
@@ -42,7 +42,7 @@ if (host === "localhost") {
 }
 
 export default defineConfig({
-  root: dirname(fileURLToPath(import.meta.url)),
+  root,
   plugins: [react()],
   define: {
     "process.env.SHOPIFY_API_KEY": JSON.stringify(process.env.SHOPIFY_API_KEY),
@@ -51,13 +51,14 @@ export default defineConfig({
     preserveSymlinks: true,
   },
   server: {
-    host: process.env.SHOPIFY_VITE_HMR_USE_WSS ? "0.0.0.0" : "localhost",
+    host: "localhost",
     port: process.env.FRONTEND_PORT,
     hmr: hmrConfig,
     proxy: {
       "^/(\\?.*)?$": proxyOptions,
       "^/api(/|(\\?.*)?$)": proxyOptions,
+      "^/qrcodes/[0-9]+/image(\\?.*)?$": proxyOptions,
+      "^/qrcodes/[0-9]+/scan(\\?.*)?$": proxyOptions,
     },
   },
-  
 });

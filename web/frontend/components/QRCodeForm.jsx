@@ -80,7 +80,6 @@ export function QRCodeForm({ QRCode: InitialQRCode }) {
     [QRCode, setQRCode]
   );
   
-  
 
   /*
     Sets up the form state with the useForm hook.
@@ -170,13 +169,21 @@ export function QRCodeForm({ QRCode: InitialQRCode }) {
     [showResourcePicker]
   );
 
-/*
-  This is a placeholder function that is triggered when the user hits the "Delete" button.
+  const [isDeleting, setIsDeleting] = useState(false);
+const deleteQRCode = useCallback(async () => {
+  reset();
+  /* The isDeleting state disables the download button and the delete QR code button to show the merchant that an action is in progress */
+  setIsDeleting(true);
+  const response = await fetch(`/api/qrcodes/${QRCode.id}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+  });
 
-  It will be replaced by a different function when the frontend is connected to the backend.
-*/
-const isDeleting = false;
-const deleteQRCode = () => console.log("delete");
+  if (response.ok) {
+    navigate(`/`);
+  }
+}, [QRCode]);
+
 
   /*
     This function runs when a user clicks the "Go to destination" button.

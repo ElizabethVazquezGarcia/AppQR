@@ -288,4 +288,3 @@ function productCheckoutURL({ host, variantId, quantity = 1, discountCode }) {
 
   return url.toString();
 }
-
